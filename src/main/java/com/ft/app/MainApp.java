@@ -17,6 +17,7 @@ public class MainApp extends Application {
             Seed.run();
 
             var root = new BorderPane();
+            root.setCenter(new com.ft.app.ui.transactions.TransactionsView());
             var scene = new Scene(root, 1000, 700);
 
             var cssUrl = getClass().getResource("/com/ft/app/app.css");
