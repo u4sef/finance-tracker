@@ -1,5 +1,7 @@
 package com.ft.app;
 
+import com.ft.app.data.Db;
+import com.ft.app.data.Seed;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
@@ -8,12 +10,28 @@ import javafx.stage.Stage;
 public class MainApp extends Application {
     @Override
     public void start(Stage stage) {
-        var root = new BorderPane();
-        var scene = new Scene(root, 1000, 700);
-        scene.getStylesheets().add(getClass().getResource("/com/ft/app/app.css").toExternalForm());
-        stage.setTitle("Ledger — Personal Finance (CAD)");
-        stage.setScene(scene);
-        stage.show();
+        // Open DB and seed defaults
+        try {
+
+            Db.get();
+            Seed.run();
+
+            var root = new BorderPane();
+            var scene = new Scene(root, 1000, 700);
+
+            var cssUrl = getClass().getResource("/com/ft/app/app.css");
+            if (cssUrl != null) scene.getStylesheets().add(cssUrl.toExternalForm());
+
+
+            stage.setTitle("Ledger — Personal Finance (CAD)");
+            stage.setScene(scene);
+            stage.setOnCloseRequest(e -> Db.closeQuietly());
+            stage.show();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw ex;
+        }
     }
+
     public static void main(String[] args) { launch(); }
 }
