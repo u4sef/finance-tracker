@@ -6,6 +6,7 @@ import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
@@ -29,46 +30,54 @@ public class TransactionsView extends BorderPane {
         title.getStyleClass().add("h2");
 
         var addBtn = new Button("Add");
-        addBtn.setOnAction(e -> openAddDialog()); // we'll create this method next
+        addBtn.getStyleClass().add("btn-primary");
+        addBtn.setOnAction(e -> openAddDialog());
+        // simple plus icon using unicode
+        addBtn.setGraphic(new Label("\u2795")); // heavy plus
+        addBtn.setContentDisplay(ContentDisplay.LEFT);
 
-        return new ToolBar(title, new Separator(), addBtn);
+        var bar = new ToolBar(title, new Separator(), addBtn);
+        return bar;
     }
 
     private Node buildTable() {
         var colDate = new TableColumn<TransactionVm, Object>("Date");
-        colDate.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("date"));
-        colDate.setPrefWidth(120);
+        colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
 
         var colPayee = new TableColumn<TransactionVm, String>("Payee");
-        colPayee.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("payee"));
-        colPayee.setPrefWidth(220);
+        colPayee.setCellValueFactory(new PropertyValueFactory<>("payee"));
 
         var colCategory = new TableColumn<TransactionVm, String>("Category");
-        colCategory.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("category"));
-        colCategory.setPrefWidth(160);
+        colCategory.setCellValueFactory(new PropertyValueFactory<>("category"));
 
         var colAccount = new TableColumn<TransactionVm, String>("Account");
-        colAccount.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("account"));
-        colAccount.setPrefWidth(140);
+        colAccount.setCellValueFactory(new PropertyValueFactory<>("account"));
 
         var colAmount = new TableColumn<TransactionVm, String>("Amount");
-        colAmount.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("amount"));
-        colAmount.setPrefWidth(120);
-        colAmount.setStyle("-fx-alignment: CENTER-RIGHT;");
+        colAmount.setCellValueFactory(new PropertyValueFactory<>("amount"));
 
         var colNote = new TableColumn<TransactionVm, String>("Note");
-        colNote.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("note"));
-        colNote.setPrefWidth(240);
+        colNote.setCellValueFactory(new PropertyValueFactory<>("note"));
 
-        table.getColumns().addAll(colDate, colPayee, colCategory, colAccount, colAmount, colNote);
+        table.getColumns().setAll(colDate, colPayee, colCategory, colAccount, colAmount, colNote);
+
+        // Responsive sizing
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        colDate.setMaxWidth(1f * Integer.MAX_VALUE * 12);     // ~12%
+        colPayee.setMaxWidth(1f * Integer.MAX_VALUE * 22);    // ~22%
+        colCategory.setMaxWidth(1f * Integer.MAX_VALUE * 16); // ~16%
+        colAccount.setMaxWidth(1f * Integer.MAX_VALUE * 14);  // ~14%
+        colAmount.setMaxWidth(1f * Integer.MAX_VALUE * 12);   // ~12%
+        colNote.setMaxWidth(1f * Integer.MAX_VALUE * 24);     // ~24%
+
         table.setPlaceholder(new Label("No transactions yet"));
 
-        var stack = new StackPane(table);
-        return stack;
+        return new StackPane(table);
     }
 
     private Node buildStatus() {
         var bar = new ToolBar(status);
+        bar.getStyleClass().add("status-bar");
         status.setText("0 items");
         return bar;
     }
