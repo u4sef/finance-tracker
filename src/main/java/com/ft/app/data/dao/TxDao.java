@@ -46,4 +46,27 @@ public class TxDao {
             return list;
         }
     }
+
+    public long insert(long accountId, Long categoryIdOrNull, String isoDate,
+                       String payee, long amountCents, String note) throws SQLException {
+        var c = com.ft.app.data.Db.get();
+        try (var ps = c.prepareStatement("""
+        INSERT INTO tx(account_id, category_id, dt, payee, amount_cents, note)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, java.sql.Statement.RETURN_GENERATED_KEYS)) {
+            ps.setLong(1, accountId);
+            if (categoryIdOrNull == null) ps.setNull(2, java.sql.Types.INTEGER);
+            else ps.setLong(2, categoryIdOrNull);
+            ps.setString(3, isoDate);
+            ps.setString(4, payee);
+            ps.setLong(5, amountCents);
+            ps.setString(6, note);
+            ps.executeUpdate();
+            var keys = ps.getGeneratedKeys();
+            long id = keys.next() ? keys.getLong(1) : -1;
+            c.commit();
+            return id;
+        }
+    }
+
 }
