@@ -156,7 +156,46 @@ public class TransactionsView extends BorderPane {
 
     private void trySaveTransaction(String isoDate, String payee, String accountName,
                                     String categoryName, String amountText, String note) {
-        // TODO: parse amount to cents, resolve account/category IDs, insert via TxDao, refresh table
-        System.out.println("SAVE -> " + isoDate + " " + payee + " " + accountName + " " + categoryName + " " + amountText + " " + note);
+        try {
+            // parse amount (supports "85.50" or "-32")
+            long amountCents = parseAmountToCents(amountText);
+
+            // resolve IDs
+            var accDao = new com.ft.app.data.dao.AccountDao();
+            var catDao = new com.ft.app.data.dao.CategoryDao();
+
+            Long accountId = accDao.findAll().stream()
+                    .filter(a -> a.name().equals(accountName))
+                    .map(a -> a.id())
+                    .findFirst().orElseThrow();
+
+            Long categoryId = null;
+            if (categoryName != null && !categoryName.isBlank()) {
+                categoryId = catDao.findAll().stream()
+                        .filter(c -> c.name().equals(categoryName))
+                        .map(c -> c.id())
+                        .findFirst().orElse(null);
+            }
+
+            // insert
+            var txDao = new com.ft.app.data.dao.TxDao();
+            txDao.insert(accountId, categoryId, isoDate, payee, amountCents, note);
+
+            // reload table
+            loadData();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            new Alert(Alert.AlertType.ERROR, "Failed to save transaction: " + ex.getMessage()).showAndWait();
+        }
     }
+
+    private long parseAmountToCents(String s) {
+        s = s.trim().replace(",", "");
+        if (s.isBlank()) throw new IllegalArgumentException("Amount required");
+        double d = Double.parseDouble(s);                // acceptable here; storage is long cents
+        long cents = Math.round(d * 100.0);
+        return cents;
+    }
+
 }
