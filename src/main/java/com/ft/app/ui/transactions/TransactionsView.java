@@ -25,8 +25,11 @@ public class TransactionsView extends BorderPane {
     private Node buildHeader() {
         var title = new Label("Transactions");
         title.getStyleClass().add("h2");
-        var box = new ToolBar(title);
-        return box;
+
+        var addBtn = new Button("Add");
+        addBtn.setOnAction(e -> openAddDialog()); // we'll create this method next
+
+        return new ToolBar(title, new Separator(), addBtn);
     }
 
     private Node buildTable() {
@@ -81,5 +84,13 @@ public class TransactionsView extends BorderPane {
             table.setPlaceholder(new Label("Failed to load transactions"));
             e.printStackTrace();
         }
+    }
+
+    private void openAddDialog() {
+        // dialog will go here next
+        var dlg = new Dialog<Void>();
+        dlg.setTitle("Add Transaction");
+        dlg.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        dlg.showAndWait();
     }
 }
