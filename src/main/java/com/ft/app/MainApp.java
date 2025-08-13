@@ -19,7 +19,8 @@ public class MainApp extends Application {
 
             var root = new BorderPane();
             root.setPadding(new Insets(10, 12, 10, 12));
-            root.setCenter(new com.ft.app.ui.transactions.TransactionsView());
+            //root.setCenter(new com.ft.app.ui.transactions.TransactionsView());
+            root.setCenter(new com.ft.app.ui.manage.ManageView());
             var scene = new Scene(root, 1000, 700);
 
             var cssUrl = getClass().getResource("/com/ft/app/app.css");
