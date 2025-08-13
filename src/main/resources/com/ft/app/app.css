@@ -29,6 +29,13 @@
 .button.btn-primary:hover { -fx-opacity: 0.92; }
 .button.btn-primary:pressed { -fx-opacity: 0.85; }
 
+
+.button {
+    -fx-background-radius: 8px;
+    -fx-padding: 6px 12px;
+}
+
+
 /* Content padding */
 .border-pane > * {
     -fx-padding: 0;
