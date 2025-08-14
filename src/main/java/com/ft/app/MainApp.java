@@ -2,6 +2,7 @@ package com.ft.app;
 
 import com.ft.app.data.Db;
 import com.ft.app.data.Seed;
+import com.ft.app.ui.budgets.BudgetsView;
 import com.ft.app.ui.manage.ManageView;
 import com.ft.app.ui.transactions.TransactionsView;
 import javafx.application.Application;
@@ -18,6 +19,7 @@ public class MainApp extends Application {
 
     // Keep refs so we can toggle styles
     private Button btnTx;
+    private Button btnBudgets;
     private Button btnManage;
 
     @Override
@@ -31,23 +33,29 @@ public class MainApp extends Application {
 
         // Top navigation bar
         btnTx = new Button("Transactions");
+        btnBudgets = new Button("Budgets");
         btnManage = new Button("Manage");
 
         btnTx.setOnAction(e -> {
-            setActive(btnTx, btnManage);
+            setActive(btnTx, btnBudgets, btnManage);
             showTransactions();
         });
 
+        btnBudgets.setOnAction(e -> {
+            setActive(btnBudgets, btnTx, btnManage);
+            showBudgets();
+        });
+
         btnManage.setOnAction(e -> {
-            setActive(btnManage, btnTx);
+            setActive(btnManage, btnTx, btnBudgets);
             showManage();
         });
 
-        var nav = new ToolBar(btnTx, new Separator(), btnManage);
+        var nav = new ToolBar(btnTx, new Separator(), btnBudgets, new Separator(), btnManage);
         root.setTop(nav);
 
         // Default view + active state
-        setActive(btnTx, btnManage);
+        setActive(btnTx, btnBudgets, btnManage);
         showTransactions();
 
         var scene = new Scene(root, 1000, 700);
@@ -60,15 +68,21 @@ public class MainApp extends Application {
         stage.show();
     }
 
-    private void setActive(Button active, Button inactive) {
+    private void setActive(Button active, Button... inactives) {
         if (!active.getStyleClass().contains("btn-primary")) {
             active.getStyleClass().add("btn-primary");
         }
-        inactive.getStyleClass().remove("btn-primary");
+        for (var b : inactives) {
+            b.getStyleClass().remove("btn-primary");
+        }
     }
 
     private void showTransactions() {
         root.setCenter(new TransactionsView());
+    }
+
+    private void showBudgets() {
+        root.setCenter(new BudgetsView());
     }
 
     private void showManage() {
