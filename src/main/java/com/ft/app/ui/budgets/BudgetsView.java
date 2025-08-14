@@ -2,11 +2,13 @@ package com.ft.app.ui.budgets;
 
 import com.ft.app.data.dao.BudgetDao;
 import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 
 import java.time.LocalDate;
@@ -99,7 +101,83 @@ public class BudgetsView extends BorderPane {
     }
 
     private void openSetLimitDialog() {
-        // will implement after DAO — lets us upsert a budget limit for selected category/month
-        new Alert(Alert.AlertType.INFORMATION, "Set/Update coming next.").showAndWait();
+        var dlg = new Dialog<Boolean>();
+        dlg.setTitle("Set/Update Budget Limit");
+
+        var saveType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+        dlg.getDialogPane().getButtonTypes().addAll(saveType, ButtonType.CANCEL);
+
+        var catCombo = new ComboBox<String>();
+        var limitField = new TextField();
+
+        // Load EXPENSE categories only
+        try {
+            var all = new com.ft.app.data.dao.CategoryDao().findAll();
+            var expenseNames = all.stream()
+                    .filter(c -> "EXPENSE".equalsIgnoreCase(c.kind()))
+                    .map(c -> c.name())
+                    .sorted()
+                    .toList();
+            catCombo.getItems().addAll(expenseNames);
+            if (!expenseNames.isEmpty()) catCombo.getSelectionModel().selectFirst();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        var grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(8);
+        grid.addRow(0, new Label("Month:"), new Label(monthCombo.getValue()));
+        grid.addRow(1, new Label("Category:"), catCombo);
+        grid.addRow(2, new Label("Limit (e.g., 400.00):"), limitField);
+
+        dlg.getDialogPane().setContent(grid);
+
+        // Simple validation
+        var saveBtn = dlg.getDialogPane().lookupButton(saveType);
+        saveBtn.addEventFilter(ActionEvent.ACTION, evt -> {
+            if (catCombo.getValue() == null || limitField.getText().isBlank()) {
+                evt.consume();
+                new Alert(Alert.AlertType.WARNING, "Category and Limit are required.").showAndWait();
+            } else {
+                try { parseAmountToCents(limitField.getText()); }
+                catch (Exception ex) {
+                    evt.consume();
+                    new Alert(Alert.AlertType.WARNING, "Enter a valid amount like 400 or 400.00").showAndWait();
+                }
+            }
+        });
+
+        dlg.setResultConverter(bt -> bt == saveType);
+        dlg.showAndWait().ifPresent(ok -> {
+            if (Boolean.TRUE.equals(ok)) {
+                try {
+                    var month = monthCombo.getValue();
+                    var limitCents = parseAmountToCents(limitField.getText());
+
+                    // Resolve category id by name
+                    var catDao = new com.ft.app.data.dao.CategoryDao();
+                    Long categoryId = catDao.findAll().stream()
+                            .filter(c -> c.name().equals(catCombo.getValue()))
+                            .map(c -> c.id())
+                            .findFirst()
+                            .orElseThrow();
+
+                    new com.ft.app.data.dao.BudgetDao().upsert(month, categoryId, limitCents);
+                    load(); // refresh table
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    new Alert(Alert.AlertType.ERROR, "Failed to save budget: " + ex.getMessage()).showAndWait();
+                }
+            }
+        });
     }
+
+    // helper
+    private long parseAmountToCents(String s) {
+        s = s.trim().replace(",", "");
+        double d = Double.parseDouble(s);
+        return Math.round(d * 100.0);
+    }
+
 }
