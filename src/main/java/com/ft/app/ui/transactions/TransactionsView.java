@@ -25,6 +25,27 @@ public class TransactionsView extends BorderPane {
         loadData();
     }
 
+    private void exportCsv() {
+        var chooser = new javafx.stage.FileChooser();
+        chooser.setTitle("Export Transactions");
+        chooser.getExtensionFilters()
+                .add(new javafx.stage.FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        chooser.setInitialFileName("transactions-" + java.time.LocalDate.now() + ".csv");
+
+        var file = chooser.showSaveDialog(table.getScene().getWindow());
+        if (file == null) return;
+
+        try {
+            var rows = new com.ft.app.data.dao.TxDao().listAll(); // export all for MVP
+            com.ft.app.util.CsvExporter.exportTransactions(file.toPath(), rows);
+            new Alert(Alert.AlertType.INFORMATION,
+                    "Exported " + rows.size() + " rows to:\n" + file).showAndWait();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            new Alert(Alert.AlertType.ERROR, "Failed to export: " + ex.getMessage()).showAndWait();
+        }
+    }
+
     private Node buildHeader() {
         var title = new Label("Transactions");
         title.getStyleClass().add("h2");
@@ -32,13 +53,15 @@ public class TransactionsView extends BorderPane {
         var addBtn = new Button("Add");
         addBtn.getStyleClass().add("btn-primary");
         addBtn.setOnAction(e -> openAddDialog());
-        // simple plus icon using unicode
-        addBtn.setGraphic(new Label("\u2795")); // heavy plus
+        addBtn.setGraphic(new Label("\u2795"));
         addBtn.setContentDisplay(ContentDisplay.LEFT);
 
-        var bar = new ToolBar(title, new Separator(), addBtn);
-        return bar;
+        var exportBtn = new Button("Export CSV");
+        exportBtn.setOnAction(e -> exportCsv());
+
+        return new ToolBar(title, new Separator(), addBtn, new Separator(), exportBtn);
     }
+
 
     private Node buildTable() {
         var colDate = new TableColumn<TransactionVm, Object>("Date");
